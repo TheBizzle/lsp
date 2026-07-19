@@ -1,22 +1,18 @@
-use crate::token::Token;
+use crate::lexer::token::Token;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Symbol {
-  pub value: String,
+  pub name: String,
   pub token: Token,
 }
 
 #[derive(Debug, PartialEq)]
-pub enum LValue {
-  Variable { symbol: Symbol },
-}
-
-#[derive(Debug, PartialEq)]
 pub enum Expr {
-  Array { values: Vec<Self>, token: Token },
   Call { call: FuncCall, token: Token },
+  Function { value: FuncLiteral, token: Token },
   Grouping { value: Box<Self>, token: Token },
-  LValue { lvalue: LValue, token: Token },
+  List { values: Vec<Self>, token: Token },
+  LValue { name: Symbol, token: Token },
   Negated { value: Box<Self>, token: Token },
   Number { value: f64, token: Token },
   Op { left: Box<Self>, operator: Operator, right: Box<Self>, token: Token },
@@ -45,7 +41,7 @@ pub enum Operator {
 #[allow(clippy::large_enum_variant)]
 pub enum Statement {
   FunctionCall(Box<FuncCall>),
-  FunctionDecl(FuncDecl),
+  Include(String),
   VariableDecl(VarDecl),
 }
 
@@ -56,7 +52,7 @@ pub struct FuncCall {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct FuncDecl {
+pub struct FuncLiteral {
   pub name: Symbol,
   pub formals: Vec<Formal>,
   pub body: Vec<Statement>,

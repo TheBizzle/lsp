@@ -14,3 +14,12 @@ pub struct SourceLoc {
   pub column: u32,
   pub length: u32,
 }
+
+impl SourceLoc {
+  #[must_use]
+  pub const fn as_minis(&self) -> (MiniLoc, MiniLoc) {
+    let start = MiniLoc { line: self.line, column: self.column };
+    let end = MiniLoc { line: self.line, column: self.column + self.length };
+    (start, end)
+  }
+}

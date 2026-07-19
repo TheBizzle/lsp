@@ -15,7 +15,11 @@ categories = ["development-tools"]
 
 publish = false
 
+[build-dependencies]
+lalrpop = { version = "0.23.1" }
+
 [dependencies]
+lalrpop-util = { version = "0.23.1" }
 logos = { version = "0.16.1" }
 tokio = { version = "1.52.3", features = ["fs", "io-std", "macros", "rt-multi-thread"] }
 tower-lsp = { version = "0.20.0" }

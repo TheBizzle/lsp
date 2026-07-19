@@ -1,7 +1,9 @@
 use tower_lsp_server::ls_types::{Diagnostic, DiagnosticSeverity, Position, Range};
 
-use crate::lexer::source_loc::SourceLoc;
+use crate::lexer::doc_loc::DocLoc;
+use crate::lexer::source_loc::{MiniLoc, SourceLoc};
 use crate::lexer::token::Token;
+use crate::token::Token;
 
 #[derive(Debug)]
 pub enum LspError {
@@ -17,12 +19,15 @@ pub enum LexerError {
 
 #[derive(Debug)]
 pub enum ParserError {
-  SomeParserErrorIDK { culprit: Token },
+  ExtraToken { token: Token },
+  FictionalToken { location: MiniLoc },
+  UnexpectedEOF { location: MiniLoc, expected: Vec<String> },
+  WrongToken { token: Token, expected: Vec<String> },
 }
 
 use LexerError::{FileTooBig, UnknownToken};
 use LspError::{LspLexerError, LspParserError};
-use ParserError::SomeParserErrorIDK;
+use ParserError::{ExtraToken, FictionalToken, UnexpectedEOF, WrongToken};
 
 #[must_use]
 pub fn as_diagnostic(error: LspError) -> Diagnostic {
@@ -39,14 +44,29 @@ pub fn as_diagnostic(error: LspError) -> Diagnostic {
       (range, msg)
     },
     LspLexerError(UnknownToken { culprit, source_loc }) => {
-      (as_range(&source_loc), format!("Unknown token: {culprit}")) // TODO
+      (as_range(&source_loc), format!("Unknown token: {culprit}"))
     },
-    LspParserError(SomeParserErrorIDK { culprit: Token { token_type: _, source_loc } }) => {
-      (as_range(&source_loc), "Just some random parser error, IDK".to_string()) // TODO
+
+    LspParserError(ExtraToken { token }) => {
+      (as_range(&token.source_loc), format!("Token found after EOF: {:?}", token.token_type))
+    },
+    LspParserError(FictionalToken { location }) => {
+      (as_range_mini(location), format!("Unparseable token type at location: {location:?}"))
+    },
+    LspParserError(UnexpectedEOF { location, expected }) => {
+      (as_range_mini(location), format!("Unexpected EOF at location {location:?}\nExpected: ${expected:?}"))
+    },
+    LspParserError(WrongToken { token, expected }) => {
+      let msg = format!("Wrong token for this context: {token:?}\nExpected: ${expected:?}");
+      (as_range(&token.source_loc), msg)
     },
   };
 
   Diagnostic { range, severity: Some(DiagnosticSeverity::ERROR), message, ..Default::default() }
+}
+
+fn as_range_mini(mini: MiniLoc) -> Range {
+  as_range(&SourceLoc { line: mini.line, column: mini.column, length: 1, pos: 0, doc_loc: DocLoc::new("") })
 }
 
 const fn as_range(source_loc: &SourceLoc) -> Range {
