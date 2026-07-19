@@ -1,0 +1,30 @@
+[package]
+name = "organic-lsp"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+
+authors = ["TheBizzle <jason.bertsche@gmail.com>"]
+description = "A Neovim-compatible language server for the Organic programming language"
+license = "BSD-3"
+repository = "https://github.com/TheBizzle/Organic-LSP"
+readme = "README.md"
+
+keywords = ["organic", "language-server", "lsp", "static-analysis", "ide"]
+categories = ["development-tools"]
+
+publish = false
+
+[dependencies]
+logos = { version = "0.16.1" }
+tokio = { version = "1.52.3", features = ["fs", "io-std", "macros", "rt-multi-thread"] }
+tower-lsp = { version = "0.20.0" }
+tower-lsp-server = { version = "0.23.0" }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "deny"
+pedantic = "deny"
+nursery = "deny"
