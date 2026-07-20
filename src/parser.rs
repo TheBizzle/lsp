@@ -33,7 +33,7 @@ use crate::parser::ast::Statement;
 use crate::parser::grammar::StatementParser;
 use LspError::{LspLexerError, LspParserError};
 
-pub fn analyze(doc_loc: &DocLoc, doc_text: &str) -> (Vec<Statement>, Vec<LspError>) {
+pub fn analyze<'a>(doc_loc: &DocLoc, doc_text: &str) -> (Vec<Statement>, Vec<LspError<'a>>) {
   let (tokens, lerrors) = lex(doc_loc, doc_text);
   let lsp_lerrors = lerrors.into_iter().map(LspLexerError).collect();
 

@@ -1,13 +1,16 @@
 use tower_lsp_server::ls_types::{Diagnostic, DiagnosticSeverity, Position, Range};
 
+use crate::analyzer::organic_type::OrganicType;
 use crate::lexer::doc_loc::DocLoc;
 use crate::lexer::source_loc::{MiniLoc, SourceLoc};
 use crate::lexer::token::Token;
+use crate::parser::ast::Symbol;
 
 #[derive(Debug)]
-pub enum LspError {
+pub enum LspError<'a> {
   LspLexerError(LexerError),
   LspParserError(ParserError),
+  LspAnalyzerError(AnalyzerError<'a>),
 }
 
 #[derive(Debug)]
@@ -24,8 +27,29 @@ pub enum ParserError {
   WrongToken { token: Token, expected: Vec<String> },
 }
 
+#[derive(Debug)]
+pub struct AnalyzerError<'a> {
+  pub typ: AnalyzerErrorType<'a>,
+  pub offender: Token,
+}
+
+#[derive(Debug)]
+pub enum AnalyzerErrorType<'a> {
+  ArityMismatch { fn_name: Symbol, expected: u32, got: u32 },
+  BadInternalState,
+  DuplicateVar,
+  NoSuchFn,
+  NoSuchVariable,
+  TypeMismatch { expected: OrganicType<'a>, got: OrganicType<'a> },
+  VarCannotInitInTermsOfSelf,
+}
+
+use AnalyzerErrorType::{
+  ArityMismatch, BadInternalState, DuplicateVar, NoSuchFn, NoSuchVariable, TypeMismatch,
+  VarCannotInitInTermsOfSelf,
+};
 use LexerError::{FileTooBig, UnknownToken};
-use LspError::{LspLexerError, LspParserError};
+use LspError::{LspAnalyzerError, LspLexerError, LspParserError};
 use ParserError::{ExtraToken, FictionalToken, UnexpectedEOF, WrongToken};
 
 #[must_use]
@@ -58,6 +82,38 @@ pub fn as_diagnostic(error: LspError) -> Diagnostic {
     LspParserError(WrongToken { token, expected }) => {
       let msg = format!("Wrong token for this context: {token:?}\nExpected: ${expected:?}");
       (as_range(&token.source_loc), msg)
+    },
+
+    LspAnalyzerError(AnalyzerError { typ: ArityMismatch { fn_name, expected, got }, offender }) => {
+      let msg = format!("Function `{}` takes {expected} arguments, but got {got}.", fn_name.name);
+      (as_range(&offender.source_loc), msg)
+    },
+    LspAnalyzerError(AnalyzerError { typ: BadInternalState, offender }) => {
+      let msg = format!("Fatal internal error on `{:?}`", offender.token_type);
+      (as_range(&offender.source_loc), msg)
+    },
+    LspAnalyzerError(AnalyzerError { typ: DuplicateVar, offender }) => {
+      let msg = format!("Duplicate variable: {:?}", offender.token_type);
+      (as_range(&offender.source_loc), msg)
+    },
+    LspAnalyzerError(AnalyzerError { typ: NoSuchFn, offender }) => {
+      let msg = format!("No such function: {:?}", offender.token_type);
+      (as_range(&offender.source_loc), msg)
+    },
+    LspAnalyzerError(AnalyzerError { typ: NoSuchVariable, offender }) => {
+      let msg = format!("No such variable: {:?}", offender.token_type);
+      (as_range(&offender.source_loc), msg)
+    },
+    LspAnalyzerError(AnalyzerError { typ: TypeMismatch { expected, got }, offender }) => {
+      let msg = format!(
+        "Could not match expected type `{expected:?}` with actual type `{got:?}`, regarding value `{:?}`.",
+        offender.token_type
+      );
+      (as_range(&offender.source_loc), msg)
+    },
+    LspAnalyzerError(AnalyzerError { typ: VarCannotInitInTermsOfSelf, offender }) => {
+      let msg = format!("`{:?}` cannot be defined in terms of itself", offender.token_type);
+      (as_range(&offender.source_loc), msg)
     },
   };
 
