@@ -21,6 +21,7 @@ lalrpop = { version = "0.23.1" }
 [dependencies]
 lalrpop-util = { version = "0.23.1" }
 logos = { version = "0.16.1" }
+ordered-float = { version = "5.3.0" }
 tokio = { version = "1.52.3", features = ["fs", "io-std", "macros", "rt-multi-thread"] }
 tower-lsp = { version = "0.20.0" }
 tower-lsp-server = { version = "0.23.0" }

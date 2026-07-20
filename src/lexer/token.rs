@@ -1,6 +1,7 @@
 use logos::Logos;
 
 use crate::lexer::source_loc::SourceLoc;
+use ordered_float::NotNan;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Token {
@@ -44,8 +45,8 @@ pub enum TokenType {
 
   #[token("\n")]
   Newline,
-  #[regex(r"[0-9]+(\.[0-9]+)?", |lex| lex.slice().parse::<f64>().unwrap())]
-  Number(f64),
+  #[regex(r"[0-9]+(\.[0-9]+)?", |lex| NotNan::new(lex.slice().parse::<f64>().unwrap()).unwrap())]
+  Number(NotNan<f64>),
 
   #[token("-")]
   Minus,

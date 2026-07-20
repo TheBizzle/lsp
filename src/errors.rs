@@ -3,7 +3,6 @@ use tower_lsp_server::ls_types::{Diagnostic, DiagnosticSeverity, Position, Range
 use crate::lexer::doc_loc::DocLoc;
 use crate::lexer::source_loc::{MiniLoc, SourceLoc};
 use crate::lexer::token::Token;
-use crate::token::Token;
 
 #[derive(Debug)]
 pub enum LspError {

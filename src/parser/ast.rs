@@ -1,4 +1,5 @@
 use crate::lexer::token::Token;
+use ordered_float::NotNan;
 
 #[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Symbol {
@@ -14,7 +15,7 @@ pub enum Expr {
   List { values: Vec<Self>, token: Token },
   LValue { name: Symbol, token: Token },
   Negated { value: Box<Self>, token: Token },
-  Number { value: f64, token: Token },
+  Number { value: NotNan<f64>, token: Token },
   Op { left: Box<Self>, operator: Operator, right: Box<Self>, token: Token },
   String { value: String, token: Token },
 }
